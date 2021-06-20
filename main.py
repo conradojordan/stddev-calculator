@@ -3,11 +3,15 @@ import tkinter as tk
 VERSION = 0.7
 
 
-class Application:
+class Application(tk.Frame):
     def __init__(self, parent):
-        self.header = Header(parent)
-        self.content = Content(parent)
-        self.footer = Footer(parent)
+        super().__init__(parent)
+        self.pack()
+        self.header = Header(self)
+        self.content = Content(self)
+        self.footer = Footer(self)
+
+        self.winfo_toplevel().title(f"Standard Deviation Calculator v{VERSION}")
 
 
 class Header(tk.Frame):
@@ -17,6 +21,7 @@ class Header(tk.Frame):
 
         self.header_text = tk.Label(self, text="Standard Deviation Calculator")
         self.header_text["font"] = ("Helvetica", 22)
+        self.header_text.configure(padx=20, pady=20)
         self.header_text.pack()
 
 
@@ -32,7 +37,7 @@ class Content(tk.Frame):
 class UserInput(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
-        self.pack(side=tk.LEFT)
+        self.pack(side=tk.LEFT, ipadx=20)
 
         self.insert_xi = tk.Label(self, text="Enter Xi:")
         self.insert_xi["font"] = ("Helvetica", 14)
@@ -42,7 +47,9 @@ class UserInput(tk.Frame):
         self.total_entries = TotalEntries(self)
         self.add_reset_help = AddResetHelp(self)
 
-        self.calculate = tk.Button(self, text="Calculate data", bg="SeaGreen1")
+        self.calculate = tk.Button(
+            self, text="Calculate data", bg="SeaGreen1", width=20
+        )
         self.calculate["font"] = ("Helvetica", 14)
         self.calculate.pack(side=tk.TOP)
 
@@ -68,6 +75,7 @@ class TotalEntries(tk.Frame):
 
         self.total_entries_label = tk.Label(self, text="Total entries: ")
         self.total_entries_label["font"] = ("Helvetica", 12)
+        self.total_entries_label.configure(pady=5)
         self.total_entries_label.pack(side=tk.LEFT)
 
         self.total_entries_value = tk.Label(self, text="0")
@@ -76,24 +84,30 @@ class TotalEntries(tk.Frame):
 
 
 class AddResetHelp(tk.Frame):
+    buttons_width = 6
+
     def __init__(self, parent):
         super().__init__(parent)
         self.pack(side=tk.TOP)
 
-        self.add = tk.Button(self, text="Adicionar")
+        self.add = tk.Button(self, text="Add X", width=self.buttons_width)
         self.add.pack(side=tk.LEFT)
 
-        self.reset = tk.Button(self, text="Reset", bg="IndianRed1")
+        self.reset = tk.Button(
+            self, text="Reset", bg="IndianRed1", width=self.buttons_width
+        )
         self.reset.pack(side=tk.LEFT)
 
-        self.help = tk.Button(self, text="Help", bg="goldenrod1")
+        self.help = tk.Button(
+            self, text="Help", bg="goldenrod1", width=self.buttons_width
+        )
         self.help.pack(side=tk.LEFT)
 
 
 class Results(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
-        self.pack(side=tk.RIGHT)
+        self.pack(side=tk.RIGHT, padx=20)
 
         self.mean = Mean(self)
         self.median = Median(self)
@@ -164,10 +178,10 @@ class Footer(tk.Frame):
 
         self.header_text = tk.Label(self, text="Conrado Jordan © 2021")
         self.header_text["font"] = ("Helvetica", 10)
+        self.header_text.configure(pady=10)
         self.header_text.pack()
 
 
 root = tk.Tk()
 myapp = Application(root)
-root.winfo_toplevel().title(f"Standard Deviation Calculator v{VERSION}")
 root.mainloop()
