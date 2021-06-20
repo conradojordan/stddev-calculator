@@ -1,2 +1,2 @@
 # stddev-calculator
-Standard Deviation GUI calculator made in Python
+Standard Deviation calculator made in Python with tk GUI
