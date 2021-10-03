@@ -56,22 +56,126 @@ class UserInput(tk.Frame):
         self.total_entries = TotalEntries(self)
         self.add_reset_help = AddResetHelp(self)
 
-        self.calculate = tk.Button(
-            self,
-            text="Calculate data",
-            bg="PaleGreen2",
-            activebackground="PaleGreen1",
-            width=20,
-            command=self.calculate_and_display_data,
+
+class X(tk.Frame):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.pack(side=tk.TOP)
+        self.parent = parent
+
+        self.x_label = tk.Label(self, text="X = ")
+        self.x_label["font"] = ("Helvetica", 12)
+        self.x_label.pack(side=tk.LEFT)
+
+        self.x_entry = tk.Entry(self)
+        self.x_entry.pack(side=tk.RIGHT)
+        self.x_entry.focus_force()
+        self.x_entry.bind("<Return>", self.add_x_value)
+        self.x_entry.bind("<KP_Enter>", self.add_x_value)
+        self.x_entry.bind("<Shift_R>", self.reset_x_values)
+
+    def add_x_value(self, event=None):
+        self.parent.add_reset_help.add_x_value_and_calculate_data(event)
+
+    def reset_x_values(self, event=None):
+        self.parent.add_reset_help.reset_x_values(event)
+
+
+class TotalEntries(tk.Frame):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.pack(side=tk.TOP)
+        self.parent = parent
+
+        self.current_total_entries = tk.IntVar()
+
+        self.total_entries_label = tk.Label(self, text="Total entries (N): ")
+        self.total_entries_label["font"] = ("Helvetica", 12)
+        self.total_entries_label.configure(pady=5)
+        self.total_entries_label.pack(side=tk.LEFT)
+
+        self.total_entries_value = tk.Label(
+            self, textvariable=self.current_total_entries
         )
-        self.calculate["font"] = ("Helvetica", 14)
-        self.calculate.pack(side=tk.TOP)
-        self.calculate.bind("<Return>", self.calculate_and_display_data)
-        self.calculate.bind("<KP_Enter>", self.calculate_and_display_data)
+        self.total_entries_value["font"] = ("Helvetica", 12)
+        self.total_entries_value.pack(side=tk.RIGHT)
+
+
+class AddResetHelp(tk.Frame):
+    buttons_width = 6
+    help_window_open = False
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.pack(side=tk.TOP)
+        self.parent = parent
+
+        self.add = tk.Button(
+            self,
+            text="Add X",
+            bg="PaleGreen2",
+            activebackground="pale green",
+            width=self.buttons_width,
+            command=self.add_x_value_and_calculate_data,
+        )
+        self.add.pack(side=tk.LEFT)
+        self.add.bind("<Return>", self.add_x_value_and_calculate_data)
+        self.add.bind("<KP_Enter>", self.add_x_value_and_calculate_data)
+
+        self.reset = tk.Button(
+            self,
+            text="Reset",
+            bg="pink2",
+            activebackground="pink",
+            width=self.buttons_width,
+            command=self.reset_x_values,
+        )
+        self.reset.pack(side=tk.LEFT)
+        self.reset.bind("<Return>", self.reset_x_values)
+        self.reset.bind("<KP_Enter>", self.reset_x_values)
+
+        self.help = tk.Button(
+            self,
+            text="Help",
+            bg="khaki2",
+            activebackground="khaki1",
+            width=self.buttons_width,
+            command=self.open_help_window,
+        )
+        self.help.pack(side=tk.LEFT)
+        self.help.bind("<Return>", self.open_help_window)
+        self.help.bind("<KP_Enter>", self.open_help_window)
+
+    def add_x_value_and_calculate_data(self, event=None):
+        value = self.parent.x.x_entry.get()
+        if value:
+            Application.x_values.append(float(value))
+            curr = self.parent.total_entries.current_total_entries
+            curr.set(len(Application.x_values))
+            self.clean_entry()
+
+        self.calculate_and_display_data(event)
+
+    def reset_x_values(self, event=None):
+        Application.x_values = []
+        curr = self.parent.total_entries.current_total_entries
+        curr.set(len(Application.x_values))
+        self.clean_entry()
+        self.clean_results()
+
+    def clean_entry(self):
+        self.parent.x.x_entry.delete(0, "end")
+
+    def clean_results(self):
+        self.parent.parent.results.mean.mean.set(0.0)
+        self.parent.parent.results.median.median.set(0.0)
+        self.parent.parent.results.variance.variance.set(0.0)
+        self.parent.parent.results.std_dev.std_dev.set(0.0)
 
     def calculate_and_display_data(self, event=None):
         if Application.x_values:
-            # Calculate values (some are reused)
+            # Calculate values. Mean is used to calculte variance and
+            # variance is used to calculate standard deviation.
             mean = self.calculate_mean()
             median = self.calculate_median()
             variance = self.calculate_variance(mean)
@@ -125,124 +229,31 @@ class UserInput(tk.Frame):
         return std_dev
 
     def display_results(self, mean, median, variance, std_dev):
-        self.parent.results.mean.mean.set(round(mean, Application.precision))
-        self.parent.results.median.median.set(round(median, Application.precision))
-        self.parent.results.variance.variance.set(
-            round(variance, Application.precision)
-        )
-        self.parent.results.std_dev.std_dev.set(round(std_dev, Application.precision))
+        results = self.parent.parent.results
+
+        results.mean.mean.set(round(mean, Application.precision))
+        results.median.median.set(round(median, Application.precision))
+        results.variance.variance.set(round(variance, Application.precision))
+        results.std_dev.std_dev.set(round(std_dev, Application.precision))
+
+    def open_help_window(self, event=None):
+        if not AddResetHelp.help_window_open:
+            help_window = HelpWindow(self)
+            AddResetHelp.help_window_open = True
+
+            def close_help_window():
+                help_window.destroy()
+                AddResetHelp.help_window_open = False
+
+            help_window.protocol("WM_DELETE_WINDOW", close_help_window)
 
 
-class X(tk.Frame):
+class HelpWindow(tk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
-        self.pack(side=tk.TOP)
         self.parent = parent
 
-        self.x_label = tk.Label(self, text="X = ")
-        self.x_label["font"] = ("Helvetica", 12)
-        self.x_label.pack(side=tk.LEFT)
-
-        self.x_entry = tk.Entry(self)
-        self.x_entry.pack(side=tk.RIGHT)
-        self.x_entry.focus_force()
-        self.x_entry.bind("<Return>", self.add_x_value)
-        self.x_entry.bind("<Shift-Return>", self.calculate_data)
-        self.x_entry.bind("<KP_Enter>", self.add_x_value)
-        self.x_entry.bind("<Shift_R>", self.reset_x_values)
-
-    def add_x_value(self, event=None):
-        if self.x_entry.get():
-            self.parent.add_reset_help.add_x_value(event)
-        else:
-            self.parent.calculate_and_display_data(event)
-
-    def calculate_data(self, event=None):
-        self.parent.calculate_and_display_data(event)
-
-    def reset_x_values(self, event=None):
-        self.parent.add_reset_help.reset_x_values(event)
-
-
-class TotalEntries(tk.Frame):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.pack(side=tk.TOP)
-        self.parent = parent
-
-        self.current_total_entries = tk.IntVar()
-
-        self.total_entries_label = tk.Label(self, text="Total entries: ")
-        self.total_entries_label["font"] = ("Helvetica", 12)
-        self.total_entries_label.configure(pady=5)
-        self.total_entries_label.pack(side=tk.LEFT)
-
-        self.total_entries_value = tk.Label(
-            self, textvariable=self.current_total_entries
-        )
-        self.total_entries_value["font"] = ("Helvetica", 12)
-        self.total_entries_value.pack(side=tk.RIGHT)
-
-
-class AddResetHelp(tk.Frame):
-    buttons_width = 6
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.pack(side=tk.TOP)
-        self.parent = parent
-
-        self.add = tk.Button(
-            self, text="Add X", width=self.buttons_width, command=self.add_x_value
-        )
-        self.add.pack(side=tk.LEFT)
-        self.add.bind("<Return>", self.add_x_value)
-        self.add.bind("<KP_Enter>", self.add_x_value)
-
-        self.reset = tk.Button(
-            self,
-            text="Reset",
-            bg="IndianRed2",
-            activebackground="IndianRed1",
-            width=self.buttons_width,
-            command=self.reset_x_values,
-        )
-        self.reset.pack(side=tk.LEFT)
-        self.reset.bind("<Return>", self.reset_x_values)
-        self.reset.bind("<KP_Enter>", self.reset_x_values)
-
-        self.help = tk.Button(
-            self,
-            text="Help",
-            bg="goldenrod2",
-            activebackground="goldenrod1",
-            width=self.buttons_width,
-        )
-        self.help.pack(side=tk.LEFT)
-
-    def add_x_value(self, event=None):
-        value = self.parent.x.x_entry.get()
-        if value:
-            Application.x_values.append(float(value))
-            curr = self.parent.total_entries.current_total_entries
-            curr.set(len(Application.x_values))
-            self.clean_entry()
-
-    def reset_x_values(self, event=None):
-        Application.x_values = []
-        curr = self.parent.total_entries.current_total_entries
-        curr.set(len(Application.x_values))
-        self.clean_entry()
-        self.clean_results()
-
-    def clean_entry(self):
-        self.parent.x.x_entry.delete(0, "end")
-
-    def clean_results(self):
-        self.parent.parent.results.mean.mean.set(0.0)
-        self.parent.parent.results.median.median.set(0.0)
-        self.parent.parent.results.variance.variance.set(0.0)
-        self.parent.parent.results.std_dev.std_dev.set(0.0)
+        self.title("Help!")
 
 
 class Results(tk.Frame):
