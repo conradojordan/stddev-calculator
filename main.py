@@ -1,7 +1,7 @@
 import tkinter as tk
 from math import sqrt
 
-VERSION = 0.9
+VERSION = "1.1"
 
 
 class Application(tk.Frame):
@@ -252,8 +252,34 @@ class HelpWindow(tk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
+        self.geometry("430x350")
 
-        self.title("Help!")
+        self.title("Help")
+
+        self.help_text = tk.Label(self, padx=10, pady=20)
+        self.help_text["font"] = ("Helvetica", 12)
+        self.help_text[
+            "text"
+        ] = """To use the program, simply enter values of X by
+typing them in the input box and clicking on "Add X". The
+results for the current values will automatically be
+calculated and shown on screen.
+Click on "Reset" to delete all current values and
+start over.
+Click on "Help" to open this window (as you may have
+already noticed).
+
+
+Instead of using the mouse, you can also insert values
+by pressing <Enter> and you can reset them by pressing
+<Right-Shift>. Entering values using the numeric
+keyboard also works :)
+
+
+Any issues or suggestions, feel free to send me an
+e-mail at conrado.jordan@gmail.com
+"""
+        self.help_text.pack(side=tk.TOP)
 
 
 class Results(tk.Frame):
