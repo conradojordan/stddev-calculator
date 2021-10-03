@@ -48,7 +48,11 @@ class UserInput(tk.Frame):
         self.add_reset_help = AddResetHelp(self)
 
         self.calculate = tk.Button(
-            self, text="Calculate data", bg="SeaGreen1", width=20
+            self,
+            text="Calculate data",
+            bg="SeaGreen2",
+            activebackground="SeaGreen1",
+            width=20,
         )
         self.calculate["font"] = ("Helvetica", 14)
         self.calculate.pack(side=tk.TOP)
@@ -94,12 +98,20 @@ class AddResetHelp(tk.Frame):
         self.add.pack(side=tk.LEFT)
 
         self.reset = tk.Button(
-            self, text="Reset", bg="IndianRed1", width=self.buttons_width
+            self,
+            text="Reset",
+            bg="IndianRed2",
+            activebackground="IndianRed1",
+            width=self.buttons_width,
         )
         self.reset.pack(side=tk.LEFT)
 
         self.help = tk.Button(
-            self, text="Help", bg="goldenrod1", width=self.buttons_width
+            self,
+            text="Help",
+            bg="goldenrod2",
+            activebackground="goldenrod1",
+            width=self.buttons_width,
         )
         self.help.pack(side=tk.LEFT)
 
@@ -182,6 +194,23 @@ class Footer(tk.Frame):
         self.header_text.pack()
 
 
-root = tk.Tk()
-myapp = Application(root)
-root.mainloop()
+def center_window(window):
+    w = window.winfo_reqwidth()
+    h = window.winfo_reqheight()
+    ws = window.winfo_screenwidth()
+    hs = window.winfo_screenheight()
+    if ws >= 3840:
+        # Either a 4k monitor or multiple monitors; do nothing
+        return
+    x = (ws / 2) - (w / 2)
+    y = (hs / 2) - (h / 2)
+    window.geometry("+%d+%d" % (x, y))
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+
+    myapp = Application(root)
+    center_window(root)
+
+    root.mainloop()
