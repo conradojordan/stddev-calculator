@@ -1,10 +1,12 @@
 import tkinter as tk
+from math import sqrt
 
-VERSION = 0.8
+VERSION = 0.9
 
 
 class Application(tk.Frame):
     x_values = []
+    precision = 6
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -60,9 +62,75 @@ class UserInput(tk.Frame):
             bg="PaleGreen2",
             activebackground="PaleGreen1",
             width=20,
+            command=self.calculate_and_display_data,
         )
         self.calculate["font"] = ("Helvetica", 14)
         self.calculate.pack(side=tk.TOP)
+        self.calculate.bind("<Return>", self.calculate_and_display_data)
+        self.calculate.bind("<KP_Enter>", self.calculate_and_display_data)
+
+    def calculate_and_display_data(self, event=None):
+        if Application.x_values:
+            # Calculate values (some are reused)
+            mean = self.calculate_mean()
+            median = self.calculate_median()
+            variance = self.calculate_variance(mean)
+            std_dev = self.calculate_std_dev(variance)
+
+            # Display values
+            self.display_results(
+                mean=mean, median=median, variance=variance, std_dev=std_dev
+            )
+
+    def calculate_mean(self):
+        mean = sum(Application.x_values) / len(Application.x_values)
+
+        if mean.is_integer():
+            return int(mean)
+        return mean
+
+    def calculate_median(self):
+        len_values = len(Application.x_values)
+        sorted_values = sorted(Application.x_values)
+
+        if len_values % 2 == 0:
+            median = (
+                sorted_values[len_values // 2] + sorted_values[(len_values // 2) - 1]
+            ) / 2
+        else:
+            median = sorted_values[len_values // 2]
+
+        if median.is_integer():
+            return int(median)
+        return median
+
+    def calculate_variance(self, mean):
+        len_values = len(Application.x_values)
+
+        sum_square_differences = 0
+        for value in Application.x_values:
+            sum_square_differences += (value - mean) ** 2
+
+        variance = sum_square_differences / len_values
+
+        if variance.is_integer():
+            return int(variance)
+        return variance
+
+    def calculate_std_dev(self, variance):
+        std_dev = sqrt(variance)
+
+        if std_dev.is_integer():
+            return int(std_dev)
+        return std_dev
+
+    def display_results(self, mean, median, variance, std_dev):
+        self.parent.results.mean.mean.set(round(mean, Application.precision))
+        self.parent.results.median.median.set(round(median, Application.precision))
+        self.parent.results.variance.variance.set(
+            round(variance, Application.precision)
+        )
+        self.parent.results.std_dev.std_dev.set(round(std_dev, Application.precision))
 
 
 class X(tk.Frame):
@@ -79,17 +147,21 @@ class X(tk.Frame):
         self.x_entry.pack(side=tk.RIGHT)
         self.x_entry.focus_force()
         self.x_entry.bind("<Return>", self.add_x_value)
+        self.x_entry.bind("<Shift-Return>", self.calculate_data)
+        self.x_entry.bind("<KP_Enter>", self.add_x_value)
+        self.x_entry.bind("<Shift_R>", self.reset_x_values)
 
     def add_x_value(self, event=None):
-        value = self.x_entry.get()
-        if value:
-            Application.x_values.append(float(value))
-            curr = self.parent.total_entries.current_total_entries
-            curr.set(len(Application.x_values))
-            self.clean_entry()
+        if self.x_entry.get():
+            self.parent.add_reset_help.add_x_value(event)
+        else:
+            self.parent.calculate_and_display_data(event)
 
-    def clean_entry(self):
-        self.x_entry.delete(0, "end")
+    def calculate_data(self, event=None):
+        self.parent.calculate_and_display_data(event)
+
+    def reset_x_values(self, event=None):
+        self.parent.add_reset_help.reset_x_values(event)
 
 
 class TotalEntries(tk.Frame):
@@ -120,13 +192,12 @@ class AddResetHelp(tk.Frame):
         self.pack(side=tk.TOP)
         self.parent = parent
 
-        self.current_total_entries = parent.total_entries.current_total_entries
-
         self.add = tk.Button(
             self, text="Add X", width=self.buttons_width, command=self.add_x_value
         )
         self.add.pack(side=tk.LEFT)
         self.add.bind("<Return>", self.add_x_value)
+        self.add.bind("<KP_Enter>", self.add_x_value)
 
         self.reset = tk.Button(
             self,
@@ -138,6 +209,7 @@ class AddResetHelp(tk.Frame):
         )
         self.reset.pack(side=tk.LEFT)
         self.reset.bind("<Return>", self.reset_x_values)
+        self.reset.bind("<KP_Enter>", self.reset_x_values)
 
         self.help = tk.Button(
             self,
@@ -152,22 +224,31 @@ class AddResetHelp(tk.Frame):
         value = self.parent.x.x_entry.get()
         if value:
             Application.x_values.append(float(value))
-            self.current_total_entries.set(len(Application.x_values))
+            curr = self.parent.total_entries.current_total_entries
+            curr.set(len(Application.x_values))
             self.clean_entry()
 
     def reset_x_values(self, event=None):
         Application.x_values = []
-        self.current_total_entries.set(len(Application.x_values))
+        curr = self.parent.total_entries.current_total_entries
+        curr.set(len(Application.x_values))
         self.clean_entry()
+        self.clean_results()
 
     def clean_entry(self):
         self.parent.x.x_entry.delete(0, "end")
+
+    def clean_results(self):
+        self.parent.parent.results.mean.mean.set(0.0)
+        self.parent.parent.results.median.median.set(0.0)
+        self.parent.parent.results.variance.variance.set(0.0)
+        self.parent.parent.results.std_dev.std_dev.set(0.0)
 
 
 class Results(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
-        self.pack(side=tk.RIGHT, padx=20)
+        self.pack(side=tk.RIGHT, padx=10, ipadx=10)
         self.parent = parent
 
         self.mean = Mean(self)
@@ -182,11 +263,13 @@ class Mean(tk.Frame):
         self.pack(side=tk.TOP)
         self.parent = parent
 
+        self.mean = tk.DoubleVar()
+
         self.mean_label = tk.Label(self, text="Mean - ")
         self.mean_label["font"] = ("Helvetica", 12)
         self.mean_label.pack(side=tk.LEFT)
 
-        self.mean_value = tk.Label(self, text=" ")
+        self.mean_value = tk.Label(self, textvariable=self.mean)
         self.mean_value["font"] = ("Helvetica", 12)
         self.mean_value.pack(side=tk.RIGHT)
 
@@ -197,11 +280,13 @@ class Median(tk.Frame):
         self.pack(side=tk.TOP)
         self.parent = parent
 
+        self.median = tk.DoubleVar()
+
         self.median_label = tk.Label(self, text="Median - ")
         self.median_label["font"] = ("Helvetica", 12)
         self.median_label.pack(side=tk.LEFT)
 
-        self.median_value = tk.Label(self, text=" ")
+        self.median_value = tk.Label(self, textvariable=self.median)
         self.median_value["font"] = ("Helvetica", 12)
         self.median_value.pack(side=tk.RIGHT)
 
@@ -212,11 +297,13 @@ class Variance(tk.Frame):
         self.pack(side=tk.TOP)
         self.parent = parent
 
+        self.variance = tk.DoubleVar()
+
         self.median_label = tk.Label(self, text="Variance - ")
         self.median_label["font"] = ("Helvetica", 12)
         self.median_label.pack(side=tk.LEFT)
 
-        self.median_value = tk.Label(self, text=" ")
+        self.median_value = tk.Label(self, textvariable=self.variance)
         self.median_value["font"] = ("Helvetica", 12)
         self.median_value.pack(side=tk.RIGHT)
 
@@ -227,13 +314,15 @@ class StdDev(tk.Frame):
         self.pack(side=tk.TOP)
         self.parent = parent
 
-        self.median_label = tk.Label(self, text="Standard Deviation - ")
-        self.median_label["font"] = ("Helvetica", 12)
-        self.median_label.pack(side=tk.LEFT)
+        self.std_dev = tk.DoubleVar()
 
-        self.median_value = tk.Label(self, text=" ")
-        self.median_value["font"] = ("Helvetica", 12)
-        self.median_value.pack(side=tk.RIGHT)
+        self.std_dev_label = tk.Label(self, text="Standard Deviation - ")
+        self.std_dev_label["font"] = ("Helvetica", 12)
+        self.std_dev_label.pack(side=tk.LEFT)
+
+        self.std_dev_value = tk.Label(self, textvariable=self.std_dev)
+        self.std_dev_value["font"] = ("Helvetica", 12)
+        self.std_dev_value.pack(side=tk.RIGHT)
 
 
 class Footer(tk.Frame):
