@@ -252,7 +252,7 @@ class HelpWindow(tk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
-        self.geometry("430x350")
+        self.geometry("440x380")
 
         self.title("Help")
 
@@ -261,20 +261,22 @@ class HelpWindow(tk.Toplevel):
         self.help_text[
             "text"
         ] = """To use the program, simply enter values of X by
-typing them in the input box and clicking on "Add X". The
-results for the current values will automatically be
-calculated and shown on screen.
+typing them into the input box and clicking on "Add X".
+The results for the current values will automatically be
+calculated and shown on screen. Make sure to enter values
+using dot (.) as decimal separator. The results are rounded
+to 6 decimal digits after the separator (although this value
+can easily be modified in the source-code if needed).
+
 Click on "Reset" to delete all current values and
 start over.
 Click on "Help" to open this window (as you may have
 already noticed).
 
-
 Instead of using the mouse, you can also insert values
 by pressing <Enter> and you can reset them by pressing
 <Right-Shift>. Entering values using the numeric
 keyboard also works :)
-
 
 Any issues or suggestions, feel free to send me an
 e-mail at conrado.jordan@gmail.com
