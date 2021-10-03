@@ -9,3 +9,7 @@ You should search on the internet for the correct way to install it for your des
 
 # Executing the program
 To execute the program simply run the `main.py` file.
+
+## Screenshot
+
+<img src="screenshot.png" alt="Screenshot of standard deviation calculator running with GUI" width="600"/>
